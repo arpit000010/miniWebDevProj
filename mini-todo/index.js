@@ -10,24 +10,24 @@ let nextId = 1;
 
 app.post('/todos', (req, res)=>{
 
-    const {title, description} = req.body;
+    const {title, description, completed} = req.body;
 
-    if(!title || !description){
+    if (!title || !description) {
         return res.status(400).json({
             error: "Title and description are required"
         });
     }
 
-    const todo = {
+    const newTodo = {
         id: nextId++,
         title,
         description,
-        createdAt: new Date().toISOString()
-    }
+        completed: completed || false
+    };
 
-    todos.push(todo);
+    todos.push(newTodo);
 
-    res.status(201).json(todo);
+    res.status(201).json(newTodo);
 
 
 })
