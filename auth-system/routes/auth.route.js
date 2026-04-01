@@ -1,5 +1,10 @@
 import express from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import {
+  register,
+  login,
+  refreshToken,
+  logout,
+} from "../controllers/auth.controller.js";
 import verifyToken from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -7,6 +12,8 @@ const router = express.Router();
 // public routes
 router.post("/register", register);
 router.post("/login", login);
+router.post("/refresh-token", refreshToken);
+router.post("/logout", logout);
 
 // protected route example
 router.get("/profile", verifyToken, (req, res) => {
