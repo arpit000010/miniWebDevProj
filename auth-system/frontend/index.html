@@ -3,40 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register</title>
+  <title>Auth — Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-  <h1>Register</h1>
+  <div class="page">
+    <div class="left">
+      <div class="brand">Auth<span>.</span>System</div>
+      <div class="left-content">
+        <h1 class="tagline">Secure by<br><em>design.</em></h1>
+        <p class="description">A production-grade authentication system built from first principles. JWT, refresh tokens, and httpOnly cookies.</p>
+        <div class="features">
+          <div class="feature"><div class="feature-dot"></div>Stateless JWT authentication</div>
+          <div class="feature"><div class="feature-dot"></div>Refresh token rotation</div>
+          <div class="feature"><div class="feature-dot"></div>httpOnly cookie security</div>
+          <div class="feature"><div class="feature-dot"></div>bcrypt password hashing</div>
+        </div>
+      </div>
+      <div class="left-footer">Built with Node.js · Express · MongoDB</div>
+    </div>
 
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <button id="registerBtn">Register</button>
-  <p id="message"></p>
-  <p>Already have an account? <a href="/login.html">Login</a></p>
+    <div class="right">
+      <div class="form-card">
+        <div class="form-header">
+          <div class="form-label">Get started</div>
+          <h2 class="form-title">Create account</h2>
+        </div>
+
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Min. 6 characters" autocomplete="new-password" />
+        </div>
+
+        <button class="btn" id="registerBtn">Create account</button>
+        <p class="message" id="message"></p>
+
+        <div class="divider"></div>
+
+        <div class="form-footer">
+          Already have an account? <a href="/login.html">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { registerUser } from './js/api.js';
     import { initAuth } from './js/interceptor.js';
 
-// if already logged in, skip login page
-const loggedIn = await initAuth();
-if (loggedIn) {
-  window.location.href = '/dashboard.html';
-}
+    const loggedIn = await initAuth();
+    if (loggedIn) window.location.href = '/dashboard.html';
 
-    document.getElementById('registerBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
+    const btn = document.getElementById('registerBtn');
+    const message = document.getElementById('message');
+
+    btn.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const message = document.getElementById('message');
+
+      if (!email || !password) {
+        message.className = 'message error';
+        message.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+      message.className = 'message';
+      message.textContent = '';
 
       const response = await registerUser(email, password);
       const data = await response.json();
 
       if (response.ok) {
-        message.textContent = 'Registered! Redirecting to login...';
+        message.className = 'message success';
+        message.textContent = 'Account created! Redirecting...';
         setTimeout(() => window.location.href = '/login.html', 1000);
       } else {
+        message.className = 'message error';
         message.textContent = data.message || 'Registration failed';
+        btn.disabled = false;
+        btn.textContent = 'Create account';
       }
     });
   </script>

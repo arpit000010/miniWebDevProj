@@ -3,41 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>Auth — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
-  <h1>Login</h1>
+  <div class="page">
+    <div class="left">
+      <div class="brand">Auth<span>.</span>System</div>
+      <div class="left-content">
+        <h1 class="tagline">Welcome<br><em>back.</em></h1>
+        <p class="description">Your session is protected by short-lived access tokens and long-lived refresh tokens stored in httpOnly cookies.</p>
+        <div class="token-display">
+          <div><span class="key">access_token</span> → <span class="val">15m expiry</span></div>
+          <div><span class="key">refresh_token</span> → <span class="val">7d expiry</span></div>
+          <div><span class="key">storage</span> → <span class="val">httpOnly cookie</span></div>
+          <div><span class="key">algorithm</span> → <span class="val">HS256</span></div>
+        </div>
+      </div>
+      <div class="left-footer">Built with Node.js · Express · MongoDB</div>
+    </div>
 
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <button id="loginBtn">Login</button>
-  <p id="message"></p>
-  <p>Don't have an account? <a href="/">Register</a></p>
+    <div class="right">
+      <div class="form-card">
+        <div class="form-header">
+          <div class="form-label">Welcome back</div>
+          <h2 class="form-title">Sign in</h2>
+        </div>
+
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Your password" autocomplete="current-password" />
+        </div>
+
+        <button class="btn" id="loginBtn">Sign in</button>
+        <p class="message" id="message"></p>
+
+        <div class="divider"></div>
+
+        <div class="form-footer">
+          No account yet? <a href="/">Create one</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { loginUser } from './js/api.js';
     import { setToken } from './js/auth.js';
     import { initAuth } from './js/interceptor.js';
 
-// if already logged in, skip login page
-const loggedIn = await initAuth();
-if (loggedIn) {
-  window.location.href = '/dashboard.html';
-}
+    const loggedIn = await initAuth();
+    if (loggedIn) window.location.href = '/dashboard.html';
 
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
+    const btn = document.getElementById('loginBtn');
+    const message = document.getElementById('message');
+
+    btn.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const message = document.getElementById('message');
+
+      if (!email || !password) {
+        message.className = 'message error';
+        message.textContent = 'Please fill in all fields';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      message.className = 'message';
+      message.textContent = '';
 
       const response = await loginUser(email, password);
       const data = await response.json();
 
       if (response.ok) {
-        setToken(data.accessToken); // store in memory
+        setToken(data.accessToken);
         window.location.href = '/dashboard.html';
       } else {
+        message.className = 'message error';
         message.textContent = data.message || 'Login failed';
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
       }
     });
   </script>

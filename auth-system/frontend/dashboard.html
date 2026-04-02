@@ -3,32 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Auth — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-  <h1>Dashboard</h1>
-  <p id="welcome">Loading...</p>
-  <button id="logoutBtn">Logout</button>
+  <div class="layout">
+    <nav>
+      <div class="brand">Auth<span>.</span>System</div>
+      <div class="nav-right">
+        <div class="status-dot">
+          <div class="dot"></div>
+          <span>Authenticated</span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Sign out</button>
+      </div>
+    </nav>
+
+    <main>
+      <div id="loadingState" class="loading">
+        <div class="spinner"></div>
+        <span>Loading your session...</span>
+      </div>
+
+      <div id="content" style="display:none;">
+        <div class="welcome-section">
+          <div class="welcome-label">Dashboard</div>
+          <h1 class="welcome-title">Hello, <span id="userName">there</span>.</h1>
+          <div class="welcome-email" id="userEmail"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Access token</div>
+            <div class="stat-value accent">Active</div>
+            <div class="stat-sub">Expires in ~15 min</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Refresh token</div>
+            <div class="stat-value blue">Stored</div>
+            <div class="stat-sub">httpOnly cookie · 7 days</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Session</div>
+            <div class="stat-value success">Secure</div>
+            <div class="stat-sub">JWT · HS256 signed</div>
+          </div>
+        </div>
+
+        <div class="section-title">Session details</div>
+        <div class="token-card">
+          <div class="token-row">
+            <span class="token-key">auth_strategy</span>
+            <span class="token-val"><span class="badge badge-yellow">JWT + Refresh Token</span></span>
+          </div>
+          <div class="token-row">
+            <span class="token-key">access_token_storage</span>
+            <span class="token-val"><span class="badge badge-blue">JS Memory</span></span>
+          </div>
+          <div class="token-row">
+            <span class="token-key">refresh_token_storage</span>
+            <span class="token-val"><span class="badge badge-green">httpOnly Cookie</span></span>
+          </div>
+          <div class="token-row">
+            <span class="token-key">password_hashing</span>
+            <span class="token-val"><span class="badge badge-green">bcrypt · 10 rounds</span></span>
+          </div>
+          <div class="token-row">
+            <span class="token-key">signing_algorithm</span>
+            <span class="token-val"><span class="badge badge-yellow">HS256</span></span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script type="module">
     import { getProfile, logoutUser } from './js/api.js';
     import { clearToken } from './js/auth.js';
     import { initAuth, withRefresh } from './js/interceptor.js';
 
-    // on every page load — silently restore session
+    const loading = document.getElementById('loadingState');
+    const content = document.getElementById('content');
+
     const loggedIn = await initAuth();
 
     if (!loggedIn) {
-      // no valid session — send to login
       window.location.href = '/login.html';
     } else {
-      // fetch profile with auto refresh
       const response = await withRefresh(() => getProfile());
       const data = await response.json();
-      document.getElementById('welcome').textContent = data.message;
+
+      // extract email from response
+      const email = data.message?.match(/Welcome (.+)!/)?.[1] || '';
+      const name = email.split('@')[0] || 'there';
+
+      document.getElementById('userName').textContent = name;
+      document.getElementById('userEmail').textContent = email;
+
+      loading.style.display = 'none';
+      content.style.display = 'block';
     }
 
-    // logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await logoutUser();
       clearToken();
@@ -37,20 +114,3 @@
   </script>
 </body>
 </html>
-```
-
----
-
-## The Complete Flow in Your Head
-```
-Register → Login → accessToken stored in memory
-                        ↓
-              dashboard loads → initAuth()
-              hits /refresh-token → cookie sent
-              new accessToken in memory
-                        ↓
-              getProfile() with token in header
-                        ↓
-              if 401 → withRefresh retries silently
-                        ↓
-              Logout → clear cookie + memory → login page
