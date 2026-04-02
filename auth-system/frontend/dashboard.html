@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+</head>
+<body>
+  <h1>Dashboard</h1>
+  <p id="welcome">Loading...</p>
+  <button id="logoutBtn">Logout</button>
+
+  <script type="module">
+    import { getProfile, logoutUser } from './js/api.js';
+    import { clearToken } from './js/auth.js';
+    import { initAuth, withRefresh } from './js/interceptor.js';
+
+    // on every page load — silently restore session
+    const loggedIn = await initAuth();
+
+    if (!loggedIn) {
+      // no valid session — send to login
+      window.location.href = '/login.html';
+    } else {
+      // fetch profile with auto refresh
+      const response = await withRefresh(() => getProfile());
+      const data = await response.json();
+      document.getElementById('welcome').textContent = data.message;
+    }
+
+    // logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await logoutUser();
+      clearToken();
+      window.location.href = '/login.html';
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## The Complete Flow in Your Head
+```
+Register → Login → accessToken stored in memory
+                        ↓
+              dashboard loads → initAuth()
+              hits /refresh-token → cookie sent
+              new accessToken in memory
+                        ↓
+              getProfile() with token in header
+                        ↓
+              if 401 → withRefresh retries silently
+                        ↓
+              Logout → clear cookie + memory → login page

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="loginBtn">Login</button>
+  <p id="message"></p>
+  <p>Don't have an account? <a href="/">Register</a></p>
+
+  <script type="module">
+    import { loginUser } from './js/api.js';
+    import { setToken } from './js/auth.js';
+    import { initAuth } from './js/interceptor.js';
+
+// if already logged in, skip login page
+const loggedIn = await initAuth();
+if (loggedIn) {
+  window.location.href = '/dashboard.html';
+}
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
+
+      const response = await loginUser(email, password);
+      const data = await response.json();
+
+      if (response.ok) {
+        setToken(data.accessToken); // store in memory
+        window.location.href = '/dashboard.html';
+      } else {
+        message.textContent = data.message || 'Login failed';
+      }
+    });
+  </script>
+</body>
+</html>
